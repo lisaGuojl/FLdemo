@@ -28,7 +28,10 @@ import pickle
 import pandas as pd
 
 # For demo
-PATH = '/home/user1/public/'
+PATH = 'updates/'
+idx = 0
+
+
 originalM = []
 maskedM = []
 # Build simple model
@@ -504,7 +507,7 @@ def postShares(idTry):
         # df_agg = pd.DataFrame([originalSum/3])
         originalSum = originalSum/3
         ogmstr = '[' + str(originalSum[0]) + ', ' + str(originalSum[1]) + ', ...' + str(originalSum[-1]) + ']'
-        df = pd.DataFrame([ogmstr])
+        df_agg = pd.DataFrame([ogmstr])
         filename = 'global_original_aggregation.csv'
         file_exists = os.path.isfile(PATH+filename)
         df_agg.to_csv(filename, index=False, header=not file_exists)
@@ -600,21 +603,21 @@ def postShares(idTry):
         file_exists = os.path.isfile('global_masked_aggregation.csv')
         df.to_csv('global_masked_aggregation.csv', index=False, header=not file_exists)
         
-
-
         MODEL.updateFromNumpyFlatArray(globalMean)
+        global idx
         
         accuracy,loss = MODEL.evaluate_model()
         app.logger.info('Server accuracy after training (with test values): ' + str(accuracy))
-        df2 = pd.DataFrame([accuracy])
+        df2 = pd.DataFrame([[idx, accuracy]])
         file_exists2 = os.path.isfile('global_accuracy_'+str(CLIENTNUM)+'.csv')
         df2.to_csv('global_accuracy_'+str(CLIENTNUM)+'.csv', mode='a', index=False, header=not file_exists2)
-        df3 = pd.DataFrame([loss])
+        df3 = pd.DataFrame([[idx, loss]])
         file_exists3 = os.path.isfile('global_loss_'+str(CLIENTNUM)+'.csv')
         df3.to_csv('global_loss_'+str(CLIENTNUM)+'.csv', mode='a', index=False, header=not file_exists3)
         
         maskedM.clear()
         originalM.clear()
+        idx += 1
 
         #timer end
         Metrics.addTime("End")
