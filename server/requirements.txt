@@ -1,0 +1,11 @@
+flask==1.1.1
+tensorflow
+cryptography
+SQLAlchemy
+psycopg2
+numpy
+sslib
+pandas
+keras
+# skt
+scikit-learn
