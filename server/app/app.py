@@ -491,7 +491,7 @@ def postShares(idTry):
         strOriginal = []
         originalSum = np.zeros(len(originalM[0]))
         for vec in originalM:
-            vecstr = str(vec[0]) + ', ' + str(vec[1]) + ', ...,  ' + str(vec[-1])
+            vecstr = '[' + str(vec[0]) + ', ' + str(vec[1]) + ', ...,  ' + str(vec[-1]) + '['
             strOriginal.append([vecstr])
             originalSum += np.array(vec)
         # df_original = pd.DataFrame(originalM)
@@ -501,14 +501,17 @@ def postShares(idTry):
         df_original.to_csv(filename, index=False, header=not file_exists)
 
         # Save aggregation of original gradients
-        df_agg = pd.DataFrame([originalSum/3])
+        # df_agg = pd.DataFrame([originalSum/3])
+        originalSum = originalSum/3
+        ogmstr = '[' + str(originalSum[0]) + ', ' + str(originalSum[1]) + ', ...' + str(originalSum[-1]) + ']'
+        df = pd.DataFrame([ogmstr])
         filename = 'global_original_aggregation.csv'
         file_exists = os.path.isfile(PATH+filename)
         df_agg.to_csv(filename, index=False, header=not file_exists)
 
         strMask = []
         for vec in maskedM:
-            vecstr = str(vec[0]) + ', ' + str(vec[1]) + ', ...,  ' + str(vec[-1])
+            vecstr = '[' + str(vec[0]) + ', ' + str(vec[1]) + ', ...,  ' + str(vec[-1]) + ']'
             strMask.append([vecstr])
         # df_mask = pd.DataFrame(maskedM)
         df_mask = pd.DataFrame(strMask)
@@ -591,7 +594,9 @@ def postShares(idTry):
 
         # print(globalMean)
         
-        df = pd.DataFrame([globalMean])
+        # df = pd.DataFrame([globalMean])
+        gmstr = '[' + str(globalMean[0]) + ', ' + str(globalMean[1]) + ', ...' + str(globalMean[-1]) + ']'
+        df = pd.DataFrame([gmstr])
         file_exists = os.path.isfile('global_masked_aggregation.csv')
         df.to_csv('global_masked_aggregation.csv', index=False, header=not file_exists)
         
