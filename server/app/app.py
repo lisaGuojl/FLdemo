@@ -500,7 +500,8 @@ def postShares(idTry):
                         
                         globalSum = globalSum + delta * puv
         
-        globalMean = globalSum / float(len(readyClients)) / 10 ** 8
+        # globalMean = globalSum / float(len(readyClients)) / 10 ** 8
+        globalMean = globalSum / CLIENTNUM / 10 ** 8
         
         accuracy,_ = MODEL.evaluate_model()
         app.logger.info('Server accuracy before training (with test values): ' + str(accuracy))
@@ -508,6 +509,7 @@ def postShares(idTry):
         print(globalMean)
         
         df = pd.DataFrame([globalMean])
+        df.round(10)
         file_exists = os.path.isfile('global.csv')
         df.to_csv('global.csv', mode='a', index=False, header=not file_exists)
 
