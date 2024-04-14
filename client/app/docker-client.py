@@ -27,12 +27,6 @@ from model import ModelTf
 from timeMetrics import timeMetrics
 import pandas as pd 
 
-class NumpyEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return json.JSONEncoder.default(self, obj)
-
 # Build simple model
 CLIENTNUMBER = 3
 
@@ -87,7 +81,7 @@ for idUser in CLIENT_LIST:
     acc = MODEL.trainModel(5, modelidx)
     print('Client ' + str(idUser) + ' accuracy after training (with test values): ' + str(acc))
     modelMatrix = MODEL.toNumpyFlatArray().copy()
-    # print(modelMatrix.shape)
+    print(modelMatrix.shape)
     filename = 'app/updates/plaintext' + str(modelidx) + '.csv'
     df = pd.DataFrame([modelMatrix])
     file_exists = os.path.isfile(filename)
@@ -326,20 +320,6 @@ for idUser in CLIENT_LIST:
     #               headers=HEADERS)
     maskedVectorEncoded = base64.b64encode(RandomMatric_Dict[idUser])
     res = rq.post(SERVER_IP+'/tries/'+idTry+'/rounds/2/masked-vector?userId='+str(idUser), data=maskedVectorEncoded)
-    vectorEncoded = base64.b64encode(modelMatrix_Dict[idUser])
-    # print(modelMatrix_Dict[idUser])
-    res = rq.post(SERVER_IP+'/tries/'+idTry+'/rounds/2/original-vector?userId='+str(idUser), data=vectorEncoded)
-
-    # reqData = {
-    #     'model': modelMatrix_Dict[idUser],
-    # }
-
-    # # print(reqData)
-    # reqJson = json.dumps(reqData, cls=NumpyEncoder)
-    # res = rq.post(SERVER_IP + '/tries/' + idTry + '/rounds/2/vector?userId=' + str(idUser), data=reqJson,
-    #               headers=HEADERS)
-
-
 
 
 ############################ STEP 4 Weighted Aggregation (WAgg)  ############################
@@ -397,7 +377,3 @@ runtime = end_time - training_time
 # TimeMetrics.addTime('End')
 # TimeMetrics.to_csv()
 # TimeMetrics.printTime()
-sum = np.zeros(28)
-for idUser in CLIENT_LIST:
-    sum += np.array(modelMatrix_Dict[idUser])
-print(sum/3)

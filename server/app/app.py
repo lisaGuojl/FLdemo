@@ -27,13 +27,6 @@ import datetime
 import pickle
 import pandas as pd
 
-# For demo
-PATH = 'updates/'
-idx = 0
-
-
-originalM = []
-maskedM = []
 # Build simple model
 MODEL = ModelTf()
 
@@ -329,15 +322,7 @@ def postMaskedInputVectors(idTry):
 
     # request.data (=maskedVector) is already in base64 format
     currentClient.maskedVectorBase64 = str(request.data, 'utf8')
-    r = base64.decodebytes(currentClient.maskedVectorBase64.encode('utf8'))
-    maskedVector = np.frombuffer(r, dtype=np.dtype('d'))
 
-    # vecstr = str(maskedVector[0]) + ', ' + str(maskedVector[1]) + ', ...,  ' + str(maskedVector[-1])
-    maskedM.append(maskedVector)
-    # df_row = pd.DataFrame([vecstr])
-    # filename = 'masked.csv'
-    # file_exists = os.path.isfile(PATH+filename)
-    # df_row.to_csv(filename, index=False, header=not file_exists)
     readyClients = []
 
     for client in currentTry.clients:
@@ -351,45 +336,6 @@ def postMaskedInputVectors(idTry):
     session.commit()
 
     return '', 200, {'ContentType':'application/json'}
-
-@app.route("/tries/<idTry>/rounds/2/original-vector", methods=['POST'])
-def postoriginalInputVectors(idTry):
-    session = Session()
-
-    userId = request.args.get('userId')
-
-    currentClient = session.query(models.models.Client).get(int(userId))
-    currentTry = session.query(models.models.TryEntity)\
-        .with_for_update(of=models.models.Client)\
-        .join(models.models.TryEntity.clients)\
-        .filter(models.models.TryEntity.id==int(idTry))\
-        .first()
-
-    if currentTry == None:
-        session.close()
-        return 'No try with this id', 400
-
-    if currentTry.currentRound != 2:
-        session.close()
-        return 'Try is not in round 2', 400
-
-    if currentClient == None:
-        return "Client not found", 400
-
-    # request.data (=maskedVector) is already in base64 format
-    originalVectorBase64 = str(request.data, 'utf8')
-    r = base64.decodebytes(originalVectorBase64.encode('utf8'))
-    originalVector = np.frombuffer(r, dtype=np.dtype('d'))
-    # print(originalVector)
-
-    # vecstr = str(originalVector[0]) + ', ' + str(originalVector[1]) + ', ...,  ' + str(originalVector[-1])
-    originalM.append(originalVector)
-    
-
-    session.commit()
-
-    return '', 200, {'ContentType':'application/json'}
-
 
 @app.route("/tries/<idTry>/rounds/4/user-list")
 def getUserList(idTry):
@@ -489,42 +435,6 @@ def postShares(idTry):
     
     # if len(readyClients) >= currentTry.threshold:
     if len(readyClients) >= CLIENTNUM:
-        
-        # For demo store gradients###############################################
-        strOriginal = []
-        originalSum = np.zeros(len(originalM[0]))
-        for vec in originalM:
-            vecstr = '[' + str(vec[0]) + ', ' + str(vec[1]) + ', ...,  ' + str(vec[-1]) + ']'
-            strOriginal.append([vecstr])
-            originalSum += np.array(vec)
-        # df_original = pd.DataFrame(originalM)
-        df_original = pd.DataFrame(strOriginal)
-        filename = 'original.csv'
-        file_exists = os.path.isfile(PATH+filename)
-        df_original.to_csv(filename, index=False, header=not file_exists)
-
-        # Save aggregation of original gradients
-        # df_agg = pd.DataFrame([originalSum/3])
-        originalSum = originalSum/3
-        ogmstr = '[' + str(originalSum[0]) + ', ' + str(originalSum[1]) + ', ...' + str(originalSum[-1]) + ']'
-        df_agg = pd.DataFrame([ogmstr])
-        filename = 'global_original_aggregation.csv'
-        file_exists = os.path.isfile(PATH+filename)
-        df_agg.to_csv(filename, index=False, header=not file_exists)
-
-        strMask = []
-        for vec in maskedM:
-            vecstr = '[' + str(vec[0]) + ', ' + str(vec[1]) + ', ...,  ' + str(vec[-1]) + ']'
-            strMask.append([vecstr])
-        # df_mask = pd.DataFrame(maskedM)
-        df_mask = pd.DataFrame(strMask)
-        filename = 'mask.csv'
-        file_exists = os.path.isfile(PATH+filename)
-        df_mask.to_csv(filename, index=False, header=not file_exists)
-
-
-        #########################################################################
-
         # COMPUTE GLOBAL SUM
         globalSum = np.zeros(CLIENT_SECRET_SIZE, dtype=np.dtype('d'))
         
@@ -595,29 +505,24 @@ def postShares(idTry):
         accuracy,_ = MODEL.evaluate_model()
         app.logger.info('Server accuracy before training (with test values): ' + str(accuracy))
 
-        # print(globalMean)
+        print(globalMean)
         
-        # df = pd.DataFrame([globalMean])
-        gmstr = '[' + str(globalMean[0]) + ', ' + str(globalMean[1]) + ', ...' + str(globalMean[-1]) + ']'
-        df = pd.DataFrame([gmstr])
-        file_exists = os.path.isfile('global_masked_aggregation.csv')
-        df.to_csv('global_masked_aggregation.csv', index=False, header=not file_exists)
-        
+        df = pd.DataFrame([globalMean])
+        file_exists = os.path.isfile('global.csv')
+        df.to_csv('global.csv', mode='a', index=False, header=not file_exists)
+
+
         MODEL.updateFromNumpyFlatArray(globalMean)
-        global idx
         
         accuracy,loss = MODEL.evaluate_model()
         app.logger.info('Server accuracy after training (with test values): ' + str(accuracy))
-        df2 = pd.DataFrame([[idx, accuracy]])
+        df2 = pd.DataFrame([accuracy])
         file_exists2 = os.path.isfile('global_accuracy_'+str(CLIENTNUM)+'.csv')
         df2.to_csv('global_accuracy_'+str(CLIENTNUM)+'.csv', mode='a', index=False, header=not file_exists2)
-        df3 = pd.DataFrame([[idx, loss]])
+        df3 = pd.DataFrame([loss])
         file_exists3 = os.path.isfile('global_loss_'+str(CLIENTNUM)+'.csv')
         df3.to_csv('global_loss_'+str(CLIENTNUM)+'.csv', mode='a', index=False, header=not file_exists3)
         
-        maskedM.clear()
-        originalM.clear()
-        idx += 1
 
         #timer end
         Metrics.addTime("End")
@@ -625,8 +530,7 @@ def postShares(idTry):
 
         # Finish current try
         currentTry.currentRound = -1
-    
-    
+
     session.commit()
 
     return '', 200, {'ContentType':'application/json'}
