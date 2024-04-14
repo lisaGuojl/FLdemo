@@ -494,7 +494,7 @@ def postShares(idTry):
         strOriginal = []
         originalSum = np.zeros(len(originalM[0]))
         for vec in originalM:
-            vecstr = '[' + str(vec[0]) + ', ' + str(vec[1]) + ', ...,  ' + str(vec[-1]) + '['
+            vecstr = '[' + str(vec[0]) + ', ' + str(vec[1]) + ', ...,  ' + str(vec[-1]) + ']'
             strOriginal.append([vecstr])
             originalSum += np.array(vec)
         # df_original = pd.DataFrame(originalM)
