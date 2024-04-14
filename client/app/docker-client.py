@@ -295,6 +295,7 @@ for idUser in CLIENT_LIST:
 
     filename = 'app/updates/masked' + str(id) + '.csv'
     df = pd.DataFrame([maskedVector])
+    df.round(0)
     file_exists = os.path.isfile(filename)
     df.to_csv(filename, mode='a', index=False, header=not file_exists)
     id+=1
@@ -377,3 +378,11 @@ runtime = end_time - training_time
 # TimeMetrics.addTime('End')
 # TimeMetrics.to_csv()
 # TimeMetrics.printTime()
+sum = np.zeros(28)
+for idUser in CLIENT_LIST:
+    sum += np.array(modelMatrix_Dict[idUser])
+sum = sum/CLIENTNUMBER
+df = pd.DataFrame([sum])
+df.round(10)
+file_exists = os.path.isfile('app/updates/aggregated_original_gradients.csv')
+df.to_csv('app/updates/aggregated_original_gradients.csv', mode='a', index=False, header=not file_exists)
